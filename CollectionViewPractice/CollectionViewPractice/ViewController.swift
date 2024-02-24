@@ -16,6 +16,12 @@ class ViewController: UIViewController {
     
     var selectedGifList: Set<String> = []
     
+    var gifOffset: Int = 0
+    
+    var fetchLimit : Int = 12
+    
+    var isFetchingMore : Bool = false
+    
     var gifList: [URL] = [] {
         didSet {
             DispatchQueue.main.async {
@@ -43,21 +49,7 @@ class ViewController: UIViewController {
         configureNav()
     }
     
-    fileprivate func configureNav() {
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: selectionModeInfo, style: .plain, target: self, action: #selector(selectMode))
-    }
-    
-    @objc func selectMode(_ sender: UIBarButtonItem) {
-        self.isSelectionMode.toggle()
-        sender.title = self.selectionModeInfo
-        
-        self.myCollectionView.performBatchUpdates { [weak self] in
-            print(#fileID, #function, #line, "- ")
-            let indexSet = IndexSet(integer: 0)
-            
-            self?.myCollectionView.reloadSections(indexSet)
-        }
-    }
+
     
 }
 
@@ -71,8 +63,16 @@ extension ViewController {
         }
     }
     
-    func fetchGiphyResponse(completion: (([URL]) -> Void)? = nil ) {
-        let url = URL(string: "https://api.giphy.com/v1/gifs/trending?api_key=3fMEvHqxzTsVYZoymezAoiC1CARul24N")!
+    
+    /// gif api 통신
+    /// - Parameters:
+    ///   - offset: 시작지점
+    ///   - limit: 가져올 갯수
+    ///   - completion: 끝난 시점에 [URL]을 출력
+    func fetchGiphyResponse(offset: Int = 0,
+                            limit: Int = 12,
+                            completion: (([URL]) -> Void)? = nil ) {
+        let url = URL(string: "https://api.giphy.com/v1/gifs/trending?api_key=3fMEvHqxzTsVYZoymezAoiC1CARul24N&offset=\(offset)&limit=\(limit)")!
         
         let task = URLSession.shared.dataTask(with: url,
                                               completionHandler: { [weak self] data, response, err in
@@ -101,6 +101,9 @@ extension ViewController {
         task.resume()
     }
     
+    
+    /// gif 가져오기
+    /// - Parameter completion: 가져온 시점
     fileprivate func loadGif(completion: (() -> Void)? = nil) {
         fetchGiphyResponse { [weak self] urlList in
             self?.gifList = urlList
@@ -111,6 +114,94 @@ extension ViewController {
             
             completion?()
         }
+    }
+    
+    
+    /// gif 더 가져오기
+    fileprivate func fetchMoreGifList(completion: (() -> Void)? = nil ) {
+        let fetchOffset = gifOffset + fetchLimit
+        print(#fileID, #function, #line, "-fetchOffset : \(fetchOffset) ")
+        
+        fetchGiphyResponse(offset: fetchOffset) { [weak self] urlList in
+            
+            guard let self = self else { return }
+            
+            self.gifOffset += self.fetchLimit
+            
+            insertItemsInCollectionView(urlList, self)
+            completion?()
+        }
+    }
+}
+
+// MARK: - 콜렉션뷰 UI 업데이트 관련
+extension ViewController {
+    fileprivate func insertItemsInCollectionView(_ urlList: [URL], _ self: ViewController) {
+        let appendingIndexPathList: [IndexPath] = urlList
+            .enumerated()
+            .map { (index, element) in
+                let startPoint = self.gifList.count + index
+                
+                return IndexPath(item: startPoint, section: 0)
+            }
+        
+        self.gifList.append(contentsOf: urlList)
+        
+        DispatchQueue.main.async {
+            self.myCollectionView.insertItems(at: appendingIndexPathList)
+        }
+    }
+}
+
+// MARK: - Nav
+extension ViewController {
+    
+    fileprivate func configureNav() {
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: selectionModeInfo, style: .plain, target: self, action: #selector(selectMode))
+        
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "더 가져오기", style: .plain, target: self, action: #selector(fetchMore))
+    }
+    
+    @objc func selectMode(_ sender: UIBarButtonItem) {
+        self.isSelectionMode.toggle()
+        sender.title = self.selectionModeInfo
+        
+        self.myCollectionView.performBatchUpdates { [weak self] in
+            print(#fileID, #function, #line, "- ")
+            let indexSet = IndexSet(integer: 0)
+            
+            self?.myCollectionView.reloadSections(indexSet)
+        }
+    }
+    
+    @objc func fetchMore() {
+        fetchMoreGifList()
+    }
+}
+
+// MARK: - Helper
+extension ViewController {
+    
+    
+    /// 스크롤뷰 바텀에 닿은지 체크
+    /// - Parameters:
+    ///   - threshold: 임계점(여유를 얼만큼 둘 것인지)
+    /// - Returns: 체크여부
+    fileprivate func isBottomCheck(threshold: CGFloat = 300, _ scrollView: UIScrollView) -> Bool {
+        
+        let contentSize = scrollView.contentSize.height
+        
+        let scrollViewSize = scrollView.frame.height
+        
+        if contentSize >= scrollViewSize {
+            return false
+        }
+        
+        let bottomEdge = scrollView.contentOffset.y + scrollView.frame.size.height
+        
+        let isBottom = bottomEdge >= scrollView.contentSize.height
+        
+        return isBottom
     }
 }
 
@@ -208,6 +299,25 @@ extension ViewController: UICollectionViewDelegateFlowLayout {
     }
     
 }
+
+extension ViewController: UIScrollViewDelegate {
+    
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        
+        guard isBottomCheck(scrollView),
+              !isFetchingMore else { return }
+        
+        isFetchingMore = true
+        
+        self.fetchMoreGifList { [weak self] in
+            self?.isFetchingMore = false
+        }
+        
+    }
+}
+
+
 
 
 
