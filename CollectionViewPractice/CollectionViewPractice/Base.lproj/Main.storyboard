@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22505" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22505" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="To1-qM-yeT">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
@@ -19,7 +19,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="tyC-62-qdz">
-                                <rect key="frame" x="0.0" y="59" width="393" height="759"/>
+                                <rect key="frame" x="0.0" y="103" width="393" height="715"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="GYE-cV-SPK">
                                     <size key="itemSize" width="100" height="100"/>
@@ -39,16 +39,27 @@
                                                     <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
                                                     <color key="backgroundColor" red="0.94328010080000002" green="0.77167286160000004" blue="0.2058116646" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                                 </imageView>
+                                                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="checkbox - normal" translatesAutoresizingMaskIntoConstraints="NO" id="XXV-CF-PvF">
+                                                    <rect key="frame" x="67" y="67" width="25" height="25"/>
+                                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="25" id="RNt-9z-MmI"/>
+                                                        <constraint firstAttribute="width" secondItem="XXV-CF-PvF" secondAttribute="height" multiplier="1:1" id="gI7-Tc-iOC"/>
+                                                    </constraints>
+                                                </imageView>
                                             </subviews>
                                             <constraints>
                                                 <constraint firstItem="bvK-j8-6tu" firstAttribute="leading" secondItem="elx-ql-VUX" secondAttribute="leading" id="7c7-5t-Syc"/>
+                                                <constraint firstItem="XXV-CF-PvF" firstAttribute="bottom" secondItem="bvK-j8-6tu" secondAttribute="bottom" constant="-8" id="Ap8-iH-fL1"/>
                                                 <constraint firstAttribute="bottom" secondItem="bvK-j8-6tu" secondAttribute="bottom" id="EGk-bJ-pZD"/>
                                                 <constraint firstAttribute="trailing" secondItem="bvK-j8-6tu" secondAttribute="trailing" id="dSW-Ch-iLg"/>
+                                                <constraint firstItem="XXV-CF-PvF" firstAttribute="trailing" secondItem="bvK-j8-6tu" secondAttribute="trailing" constant="-8" id="edU-CN-63v"/>
                                                 <constraint firstItem="bvK-j8-6tu" firstAttribute="top" secondItem="elx-ql-VUX" secondAttribute="top" id="m69-tM-x2d"/>
                                             </constraints>
                                         </collectionViewCellContentView>
                                         <connections>
                                             <outlet property="gifView" destination="bvK-j8-6tu" id="kPB-PN-8WB"/>
+                                            <outlet property="selectBox" destination="XXV-CF-PvF" id="fwU-r1-PRi"/>
                                         </connections>
                                     </collectionViewCell>
                                 </cells>
@@ -56,7 +67,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="393" height="50"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                     <subviews>
-                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="헤더" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3rW-Eb-oqC">
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="선택된 Gif: 0개" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3rW-Eb-oqC">
                                             <rect key="frame" x="10" y="10" width="373" height="30"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                             <nil key="textColor"/>
@@ -69,6 +80,9 @@
                                         <constraint firstAttribute="bottom" secondItem="3rW-Eb-oqC" secondAttribute="bottom" constant="10" id="uhr-zd-Nup"/>
                                         <constraint firstItem="3rW-Eb-oqC" firstAttribute="leading" secondItem="pXB-1f-T8R" secondAttribute="leading" constant="10" id="zWn-kR-4vc"/>
                                     </constraints>
+                                    <connections>
+                                        <outlet property="selectionInfoLabel" destination="3rW-Eb-oqC" id="O7r-Bf-bN5"/>
+                                    </connections>
                                 </collectionReusableView>
                                 <collectionReusableView key="sectionFooterView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" reuseIdentifier="CustomFooterView" id="c6l-Ip-FVK" customClass="CustomFooterView" customModule="CollectionViewPractice" customModuleProvider="target">
                                     <rect key="frame" x="0.0" y="170" width="393" height="50"/>
@@ -99,16 +113,36 @@
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="tyC-62-qdz" secondAttribute="trailing" id="kHw-jj-h5T"/>
                         </constraints>
                     </view>
+                    <navigationItem key="navigationItem" id="4v3-bb-8tq"/>
                     <connections>
                         <outlet property="myCollectionView" destination="tyC-62-qdz" id="Sxr-rf-N9M"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="140" y="4"/>
+            <point key="canvasLocation" x="1066.4122137404579" y="3.5211267605633805"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="kWx-zv-Pv7">
+            <objects>
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="To1-qM-yeT" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="ybf-z2-iSL">
+                        <rect key="frame" x="0.0" y="59" width="393" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="NU1-ev-g0W"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="lyn-Cy-XX1" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="139.69465648854961" y="3.5211267605633805"/>
         </scene>
     </scenes>
     <resources>
+        <image name="checkbox - normal" width="30" height="30"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

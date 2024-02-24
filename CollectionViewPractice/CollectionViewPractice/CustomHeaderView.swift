@@ -9,6 +9,9 @@ import UIKit
 
 class CustomHeaderView: UICollectionReusableView {
     
+    
+    @IBOutlet weak var selectionInfoLabel: UILabel!
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         print(#fileID, #function, #line, "- ")

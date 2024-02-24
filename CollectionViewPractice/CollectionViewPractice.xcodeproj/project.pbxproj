@@ -17,6 +17,8 @@
 		524973F42B89E1EE002282D8 /* CustomFooterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524973F32B89E1EE002282D8 /* CustomFooterView.swift */; };
 		524973F62B89E202002282D8 /* Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524973F52B89E202002282D8 /* Helper.swift */; };
 		524973F82B89E2B4002282D8 /* CustomCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524973F72B89E2B4002282D8 /* CustomCollectionViewCell.swift */; };
+		524973FB2B89EC5C002282D8 /* SwiftyGif in Frameworks */ = {isa = PBXBuildFile; productRef = 524973FA2B89EC5C002282D8 /* SwiftyGif */; };
+		524973FD2B89EE1A002282D8 /* GiphyResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524973FC2B89EE1A002282D8 /* GiphyResponse.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +34,7 @@
 		524973F32B89E1EE002282D8 /* CustomFooterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFooterView.swift; sourceTree = "<group>"; };
 		524973F52B89E202002282D8 /* Helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helper.swift; sourceTree = "<group>"; };
 		524973F72B89E2B4002282D8 /* CustomCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCollectionViewCell.swift; sourceTree = "<group>"; };
+		524973FC2B89EE1A002282D8 /* GiphyResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiphyResponse.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				524973FB2B89EC5C002282D8 /* SwiftyGif in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,6 +79,7 @@
 				524973F32B89E1EE002282D8 /* CustomFooterView.swift */,
 				524973F72B89E2B4002282D8 /* CustomCollectionViewCell.swift */,
 				524973F52B89E202002282D8 /* Helper.swift */,
+				524973FC2B89EE1A002282D8 /* GiphyResponse.swift */,
 			);
 			path = CollectionViewPractice;
 			sourceTree = "<group>";
@@ -95,6 +100,9 @@
 			dependencies = (
 			);
 			name = CollectionViewPractice;
+			packageProductDependencies = (
+				524973FA2B89EC5C002282D8 /* SwiftyGif */,
+			);
 			productName = CollectionViewPractice;
 			productReference = 52070D312B89DAC9007721A4 /* CollectionViewPractice.app */;
 			productType = "com.apple.product-type.application";
@@ -123,6 +131,9 @@
 				Base,
 			);
 			mainGroup = 52070D282B89DAC9007721A4;
+			packageReferences = (
+				524973F92B89EC5C002282D8 /* XCRemoteSwiftPackageReference "SwiftyGif" */,
+			);
 			productRefGroup = 52070D322B89DAC9007721A4 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -156,6 +167,7 @@
 				52070D352B89DAC9007721A4 /* AppDelegate.swift in Sources */,
 				52070D372B89DAC9007721A4 /* SceneDelegate.swift in Sources */,
 				524973F42B89E1EE002282D8 /* CustomFooterView.swift in Sources */,
+				524973FD2B89EE1A002282D8 /* GiphyResponse.swift in Sources */,
 				524973F62B89E202002282D8 /* Helper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -387,6 +399,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		524973F92B89EC5C002282D8 /* XCRemoteSwiftPackageReference "SwiftyGif" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kirualex/SwiftyGif.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.4.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		524973FA2B89EC5C002282D8 /* SwiftyGif */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 524973F92B89EC5C002282D8 /* XCRemoteSwiftPackageReference "SwiftyGif" */;
+			productName = SwiftyGif;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 52070D292B89DAC9007721A4 /* Project object */;
 }
