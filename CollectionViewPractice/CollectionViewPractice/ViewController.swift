@@ -9,7 +9,16 @@ import UIKit
 
 class ViewController: UIViewController {
 
+    enum CellType : Int {
+        case threeGrid = 0
+        case twoGrid
+        case table
+        case full
+    }
+    
     @IBOutlet weak var myCollectionView: UICollectionView!
+    
+    @IBOutlet weak var segControl: UISegmentedControl!
     
     let reloadController: UIRefreshControl = UIRefreshControl()
     
@@ -17,13 +26,15 @@ class ViewController: UIViewController {
     
     var gifOffset: Int = 0
     
-    var fetchLimit : Int = 3
+    var fetchLimit : Int = 18
     
     var isFetchingMore : Bool = false
     
     var isFetchingButtonClicked: Bool = false
     
     var footerState : CustomFooterView.State = .normal
+    
+    var cellType: CellType = .threeGrid
     
     var gifList: [URL] = [] {
         didSet {
@@ -50,8 +61,8 @@ class ViewController: UIViewController {
         reloadController.addTarget(self, action: #selector(reload), for: .valueChanged)
         loadGif()
         configureNav()
+        setSegControl()
     }
-
 }
 
 // MARK: - API
@@ -62,10 +73,10 @@ extension ViewController {
     ///   - limit: 가져올 갯수
     ///   - completion: 끝난 시점에 [URL]을 출력
     func fetchGiphyResponse(offset: Int = 0,
-                            limit: Int = 3,
+                            limit: Int = 18,
                             completion: (([URL]?, Pagination?, Error?) -> Void)? = nil ) {
         
-        guard let url = URL(string: "https://api.giphy.com/v1/gifs/trending?api_key=33fMEvHqxzTsVYZoymezAoiC1CARul24N&offset=\(offset)&limit=\(limit)") else {
+        guard let url = URL(string: "https://api.giphy.com/v1/gifs/trending?api_key=3fMEvHqxzTsVYZoymezAoiC1CARul24N&offset=\(offset)&limit=\(limit)") else {
             completion?(nil, nil, MyError.notAllowedURL)
             return
         }
@@ -236,7 +247,7 @@ extension ViewController {
     fileprivate func configureNav() {
         self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: selectionModeInfo, style: .plain, target: self, action: #selector(selectMode))
         
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "더 가져오기", style: .plain, target: self, action: #selector(fetchMore))
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "공유하기", style: .plain, target: self, action: #selector(fetchMore))
     }
     
     // performBatchUpdates를 활용한 animation 효과
@@ -253,19 +264,33 @@ extension ViewController {
         }
     }
 
-    // sender의 활용법
     @objc func fetchMore(_ sender: UIBarButtonItem) {
-        guard !isFetchingButtonClicked else { return }
         
-        self.footerApplyState(state: .fetchingMore)
+        if !isSelectionMode || selectedGifList.isEmpty {
+            let message = "1. 선택모드 ON\n2. 체크박스 클릭"
+            self.presentAlert("공유하기", message)
+            return
+        }
         
-        isFetchingButtonClicked = true
+        let gifShard = Array(selectedGifList)
+        let ac = UIActivityViewController(activityItems: gifShard, applicationActivities: nil)
+        self.present(ac, animated: true)
+    }
+}
+
+// MARK: - Seg
+extension ViewController {
+    fileprivate func setSegControl() {
+        self.segControl.addTarget(self, action: #selector(changeCellSize), for: .valueChanged)
+    }
+    
+    @objc func changeCellSize(_ sender: UISegmentedControl) {
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            self.fetchMoreGifList {
-                self.isFetchingButtonClicked = false
-            }
+        self.cellType = CellType(rawValue: sender.selectedSegmentIndex) ?? CellType.threeGrid
+        
+        self.myCollectionView.performBatchUpdates {
+            let indexSet = IndexSet(integer: 0)
+            self.myCollectionView.reloadSections(indexSet)
         }
     }
 }
@@ -370,9 +395,25 @@ extension ViewController: UICollectionViewDelegateFlowLayout {
     // 셀 크기
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         
-        let width = (collectionView.bounds.width / 3) - 15
+        let fullWidth = myCollectionView.bounds.width
+        let fullHeight = myCollectionView.bounds.height
         
-        return CGSize(width: width, height: width)
+        switch cellType {
+        case .threeGrid:
+            let size = (fullWidth / 3) - 15
+            return CGSize(width: size, height: size)
+        case .twoGrid:
+            let size = (fullWidth / 2) - 15
+            return CGSize(width: size, height: size)
+        case .table:
+            let width = (fullWidth - 15)
+            let height = (fullWidth / 2) - 15
+            return CGSize(width: width, height: height)
+        case .full:
+            let width = (fullWidth - 15)
+            let height = (fullHeight - 15)
+            return CGSize(width: width, height: height)
+        }
     }
     
     // 셀 여백
@@ -435,7 +476,12 @@ extension ViewController: UIScrollViewDelegate {
                 print(#fileID, #function, #line, "-scroll test : end")
             }
         }
-
+    }
+    
+    func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+        if cellType == .full {
+            self.myCollectionView.verticalSnapToItem(targetContentOffset: targetContentOffset, scrollView: scrollView, velocity: velocity)
+        }
     }
 }
 
@@ -456,6 +502,66 @@ extension ViewController {
     }
 }
 
+// MARK: - alert
+extension ViewController {
+    fileprivate func presentAlert(_ title: String = "안내", _ text: String) {
+        DispatchQueue.main.async { [weak self] in
+            let alert = UIAlertController(title: title, message: text, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: NSLocalizedString("확인", comment: "Default action"), style: .default, handler: { _ in
+                NSLog("The \"OK\" alert occured.")
+            }))
+            self?.present(alert, animated: true, completion: nil)
+        }
+        
+    }
+}
+
+// MARK: - snaping 처리
+extension UICollectionView {
+    
+    func verticalSnapToItem(targetContentOffset: UnsafeMutablePointer<CGPoint>,
+                         scrollView: UIScrollView,
+                         velocity: CGPoint){
+        
+        // 기준점을 scrollView의 content의 offset으로 두고
+        targetContentOffset.pointee = scrollView.contentOffset
+        
+        // 화면에 표시되는 item의 indexPath 배열
+        var indexPaths = self.indexPathsForVisibleItems
+        
+        // 랜덤으로 들어오게 되어 오름차순이 아님
+        indexPaths.sort()
+        
+        // 가장 첫번째로 넣고
+        var indexPath = indexPaths.first!
+        
+        // 가속도가 0보다 크다면
+        if velocity.y > 0{
+            indexPath.item += 1
+        } else if velocity.y == 0{
+            
+            // indexPath값을 이용해 cell을 가져온다.
+            let cell = self.cellForItem(at: indexPath)!
+            
+            // self.contentOffset.y : 상단을 기준으로 y위치
+            // cell.frame.origin.y : 상단을 기준으로 셀의 시작위치
+            // 셀의 Inset이 얼만큼 거리가 있는지 모르니 (-)
+            let position = self.contentOffset.y - cell.frame.origin.y
+            
+            // 셀을 가장 윗부분(y)가 중간을 넘어서면 + 1 그렇지 않다면 원래 값
+            if position > cell.frame.size.height / 2 {
+                indexPath.item += 1
+            }
+        }
+        
+        // -가 없는데 되돌아 갈 수 있는 이유?
+        // indexPaths에는 현재 화면에 보이는 indexPath가 담기게 됨
+        // 되돌아 가려고 하는 순간 윗 셀도 담기게 됨
+        // 고로 + 1이 되지 않는다면 first 로 돌아가게 됨
+        
+        self.scrollToItem(at: indexPath, at: .centeredVertically, animated: true )
+    }
+}
 
 
 
