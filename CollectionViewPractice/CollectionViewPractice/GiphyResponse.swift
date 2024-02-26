@@ -65,4 +65,13 @@ struct Pagination: Codable {
         case totalCount = "total_count"
         case count, offset
     }
+    
+    func checkEnd() -> Bool {
+        
+        guard let totalCount = totalCount,
+              let count = count,
+              let offset = offset else { return true }
+        
+        return (totalCount <= count + offset)
+    }
 }
