@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import SwiftyGif
 
 class ViewController: UIViewController {
 
@@ -64,8 +63,12 @@ extension ViewController {
     ///   - completion: 끝난 시점에 [URL]을 출력
     func fetchGiphyResponse(offset: Int = 0,
                             limit: Int = 3,
-                            completion: (([URL], Pagination) -> Void)? = nil ) {
-        let url = URL(string: "https://api.giphy.com/v1/gifs/trending?api_key=3fMEvHqxzTsVYZoymezAoiC1CARul24N&offset=\(offset)&limit=\(limit)")!
+                            completion: (([URL]?, Pagination?, Error?) -> Void)? = nil ) {
+        
+        guard let url = URL(string: "https://api.giphy.com/v1/gifs/trending?api_key=33fMEvHqxzTsVYZoymezAoiC1CARul24N&offset=\(offset)&limit=\(limit)") else {
+            completion?(nil, nil, MyError.notAllowedURL)
+            return
+        }
         
         let task = URLSession.shared.dataTask(with: url,
                                               completionHandler: { [weak self] data, response, err in
@@ -73,27 +76,41 @@ extension ViewController {
             guard let self = self else { return }
             
             if err != nil {
+                completion?(nil, nil, MyError.unKnownErr(err))
                 return
             }
             
-            guard let data: Data = data else { return }
+            guard let data: Data = data else {
+                completion?(nil, nil, MyError.noData)
+                return
+            }
             
-            if let giphyResponse : GiphyResponse = try? JSONDecoder().decode(GiphyResponse.self, from: data),
-               let pagination = giphyResponse.pagination,
-               let giphyList : [Giphy] = giphyResponse.data {
+            guard let httpUrlResponse = response as? HTTPURLResponse else {
+                completion?(nil, nil, MyError.unKnownErr(err))
+                return
+            }
+            
+            let statusCode = httpUrlResponse.statusCode
+            
+            if 400...499 ~= statusCode  {
+                let response: GiphyResponse? = try? JSONDecoder().decode(GiphyResponse.self, from: data)
+                completion?(nil, nil, MyError.unAuthorized(response))
+                return
+            }
+            
+            do {
+                let giphyResponse : GiphyResponse = try JSONDecoder().decode(GiphyResponse.self, from: data)
                 
-                let urlList : [URL] = giphyList.compactMap { giphy in
-                    giphy.getUrl()
+                if let pagination = giphyResponse.pagination,
+                   let giphyList : [Giphy] = giphyResponse.data {
+                    
+                    let urlList : [URL] = giphyList.compactMap { giphy in
+                        giphy.getUrl()
+                    }
+                    completion?(urlList, pagination, nil)
                 }
-                
-                guard let total = pagination.totalCount,
-                      let count = pagination.count,
-                      let offset = pagination.offset else { return }
-                
-                print(#fileID, #function, #line, "Page total : \(total)\nPage count:\(count)\nPage offset: \(offset) ")
-                
-                completion?(urlList, pagination)
-                
+            } catch {
+                completion?(nil, nil, MyError.decodingErr)
             }
             
         })
@@ -104,15 +121,24 @@ extension ViewController {
     /// gif 가져오기
     /// - Parameter completion: 가져온 시점
     fileprivate func loadGif(completion: (() -> Void)? = nil) {
-        fetchGiphyResponse { [weak self] urlList, pagination in
-            self?.gifList = urlList
+        fetchGiphyResponse { [weak self] urlList, pagination, error in
+            if error != nil {
+                self?.errHandler(error)
+                return
+            }
+            
+            guard let self = self,
+                  let urlList = urlList,
+                  let pagination = pagination else { return }
+            
+            self.gifList = urlList
             
             let state = pagination.checkEnd() ? CustomFooterView.State.noMore : CustomFooterView.State.normal
             
             // DispatchQueue.main.async도 약간의 시간이 걸리는 것 같음
             DispatchQueue.main.async {
-                self?.myCollectionView.reloadData()
-                self?.footerApplyState(state: state)
+                self.myCollectionView.reloadData()
+                self.footerApplyState(state: state)
             }
             
             completion?()
@@ -124,11 +150,18 @@ extension ViewController {
     fileprivate func fetchMoreGifList(completion: (() -> Void)? = nil ) {
         let fetchOffset = gifOffset + fetchLimit
         
-        fetchGiphyResponse(offset: fetchOffset) { [weak self] urlList, pagination in
+        fetchGiphyResponse(offset: fetchOffset) { [weak self] urlList, pagination, error in
             
             print(#fileID, #function, #line, "-fetchOffset: \(fetchOffset) ")
             
-            guard let self = self else { return }
+            if error != nil {
+                self?.errHandler(error)
+                return
+            }
+            
+            guard let self = self,
+                  let urlList = urlList,
+                  let pagination = pagination else { return }
             
             insertItemsInCollectionView(urlList, self) {
                 
@@ -403,6 +436,23 @@ extension ViewController: UIScrollViewDelegate {
             }
         }
 
+    }
+}
+
+// MARK: - 에러처리
+extension ViewController {
+    
+    fileprivate func errHandler(_ err: Error?) {
+    
+        if let err = err as? MyError {
+            DispatchQueue.main.async {
+                let alert = UIAlertController(title: "에러", message: err.info, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: NSLocalizedString("확인", comment: "Default action"), style: .default, handler: { _ in
+                NSLog("The \"OK\" alert occured.")
+                }))
+                self.present(alert, animated: true, completion: nil)
+            }
+        }
     }
 }
 

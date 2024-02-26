@@ -7,6 +7,30 @@
 
 import Foundation
 
+enum MyError: Error {
+    case notAllowedURL
+    case noData
+    case unAuthorized(_ err: GiphyResponse?)
+    case unKnownErr(_ err: Error?)
+    case decodingErr
+    
+    var info: String {
+        switch self {
+        case .notAllowedURL:
+            return "유효하지 않은 URL입니다."
+        case .noData:
+            return "데이터가 없습니다."
+        case .unAuthorized(let err):
+            return "인증되지 않은 사용자 : \(err?.meta?.msg ?? "")"
+        case .unKnownErr(let err):
+            let nsErr = err as? NSError
+            return "알 수 없는 에러발생 : \(nsErr?.code ?? 000)"
+        case .decodingErr:
+            return "디코딩 에러"
+        }
+    }
+}
+
 // MARK: - Welcome
 struct GiphyResponse: Codable {
     let data: [Giphy]?
