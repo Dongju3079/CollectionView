@@ -27,12 +27,13 @@ class CustomCollectionViewCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         print(#fileID, #function, #line, "- ")
+        self.gifView.image = nil
         self.gifView.clear()
     }
     
     func configureCell(cellData: URL,
                        isSelectionMode: Bool,
-                       selectedGifList: Set<String>) {
+                       selectedGifList: [String]) {
         let loader = UIActivityIndicatorView(style: .medium)
         self.gifView.setGifFromURL(cellData, customLoader: loader)
         
