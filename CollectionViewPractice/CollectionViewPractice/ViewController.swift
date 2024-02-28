@@ -8,13 +8,6 @@
 import UIKit
 
 class ViewController: UIViewController {
-
-    enum CellType : Int {
-        case threeGrid = 0
-        case twoGrid
-        case table
-        case full
-    }
     
     // MARK: - UI Components
     @IBOutlet weak var myCollectionView: UICollectionView!
@@ -22,14 +15,6 @@ class ViewController: UIViewController {
     @IBOutlet weak var segControl: UISegmentedControl!
     
     @IBOutlet weak var selectedCollectionView: UICollectionView!
-    
-    let selectedCollectionViewFlowLayout: UICollectionViewFlowLayout = {
-        let flow = UICollectionViewFlowLayout()
-        flow.scrollDirection = .horizontal
-        flow.itemSize = CGSize(width: 80, height: 80)
-        flow.sectionInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        return flow
-    }()
     
     let reloadController: UIRefreshControl = UIRefreshControl()
 
@@ -60,19 +45,9 @@ class ViewController: UIViewController {
     var gifOffset: Int = 0
     
     var fetchLimit : Int = 18
-    
-    var isFetchingMore : Bool = false
-    
-    var isFetchingButtonClicked: Bool = false
-    
-    var footerState : CustomFooterView.State = .normal
-    
-    var cellType: CellType = .threeGrid
-
-    var isSelectionMode: Bool = false
-    
+                
     var selectionModeInfo: String {
-        return isSelectionMode ? "선택모드 ON" : "선택모드 OFF"
+        return myCollectionViewDataSource.isSelectionMode ? "선택모드 ON" : "선택모드 OFF"
     }
     
     // MARK: - LifeCycle
@@ -91,145 +66,41 @@ extension ViewController {
     fileprivate func configureColletionView() {
         
         // MARK: - gifColletionView Setup
-        myCollectionView.delegate = self
-        
-        myCollectionView.refreshControl = self.reloadController
-        
         myCollectionViewDataSource.configureDataSource(myCollectionView)
+        
+        // MARK: - gifCollectionView Closure Setup
+        myCollectionViewDataSource.insertSelectedGifList = insertSelectedGifList(_:)
+        myCollectionViewDataSource.updateHeaderView = updateHeaderView(_:)
+        myCollectionViewDataSource.fetchMoreGifList = fetchMoreGifList(completion:)
+        myCollectionViewDataSource.footerApplyState = footerApplyState(state:)
+        
+        // MARK: - selectedCollectionView Setup
         selectedCollectionViewDataSource.configureDataSource(selectedCollectionView, self)
-        
-        reloadController.addTarget(self, action: #selector(reload), for: .valueChanged)
-    }
-}
 
-extension ViewController: UICollectionViewDelegate {
-    
-    // 선택이 되기 전 (선택되게 할 것인지에 대한 Bool)
-    func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        return self.isSelectionMode
-    }
-    
-    // header에 접근하기
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        print(#fileID, #function, #line, "- ")
-        
-        let selectedUrlString = self.gifList[indexPath.item].absoluteString
-        
-        if selectedGifList.contains(selectedUrlString) {
-            
-            if let deletedIndex = selectedGifList.firstIndex(where: { $0 == selectedUrlString }) {
-                selectedGifList.remove(at: deletedIndex)
-            }
-            
-        } else {
-            selectedGifList.insert(selectedUrlString, at: 0)
-        }
-        
-        collectionView.reloadItems(at: [indexPath])
-        
-        updateHeaderView(collectionView)
-    }
-    
-}
-
-extension ViewController: UICollectionViewDelegateFlowLayout {
-    
-    // 셀 크기
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        
-        let fullWidth = myCollectionView.bounds.width
-        let fullHeight = myCollectionView.bounds.height
-        
-        switch cellType {
-        case .threeGrid:
-            let size = (fullWidth / 3) - 15
-            return CGSize(width: size, height: size)
-        case .twoGrid:
-            let size = (fullWidth / 2) - 15
-            return CGSize(width: size, height: size)
-        case .table:
-            let width = (fullWidth - 15)
-            let height = (fullWidth / 2) - 15
-            return CGSize(width: width, height: height)
-        case .full:
-            let width = (fullWidth - 15)
-            let height = (fullHeight - 15)
-            return CGSize(width: width, height: height)
-        }
-    }
-    
-    // 셀 여백
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        
-        return UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-    }
-    
-    // 헤더 사이즈
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
-        let width = collectionView.bounds.width
-        
-        if isSelectionMode {
-            return CGSize(width: width, height: 50)
-        } else {
-            return CGSize(width: width, height: 1)
-        }
-    }
-    
-    // 푸터 사이즈
-    // 동적으로 크기를 조정하는 방법
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
-        let width = collectionView.bounds.width
-        
-        // Get the view for the first header
-        let indexPath = IndexPath(row: 0, section: section)
-        guard let footerView = collectionView.supplementaryView(forElementKind: UICollectionView.elementKindSectionFooter, at: indexPath) else {
-            print(#fileID, #function, #line, "-footer dynamic ")
-            return CGSize(width: width, height: 100)
-        }
-        
-        // Use this view to calculate the optimal size based on the collection view's width
-        return footerView.systemLayoutSizeFitting(CGSize(width: collectionView.frame.width, height: UIView.layoutFittingExpandedSize.height),
-                                                  withHorizontalFittingPriority: .required, // Width is fixed
-                                                  verticalFittingPriority: .fittingSizeLevel) // Height can be as large as needed
-        
-    }
-    
-}
-
-extension ViewController: UIScrollViewDelegate {
-        
-    // Offset(Y)지점이 ScrollView의 Bottom에 닿은지 체크하기 위해, 여러번 호출되기 때문에 변수를 만들어서 다중호출 차단
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        
-        guard isBottomCheck(scrollView),
-              !isFetchingMore else { return }
-        
-        isFetchingMore = true
-        
-        print(#fileID, #function, #line, "-scroll tset : bottom ")
-        
-        self.footerApplyState(state: CustomFooterView.State.fetchingMore)
-        
-        // 받아올 데이터가 있는 상황에선 자연스럽게 지연시간이 발생됨
-        // 받올 데이터가 없는 상황에선 지연시간이 거의 없다.
-        // 이 때, 추가로 지연시간을 두지 않았을 땐 isFetchingMore가 false가 되는 타이밍이 scrollViewDidScroll 다중호출이 되는 시점보다 빨라서 !isFetchingMore가 제대로 작동되지 않음
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.fetchMoreGifList { [weak self] in
-                self?.isFetchingMore = false
-                print(#fileID, #function, #line, "-scroll test : end")
-            }
-        }
-    }
-    
-    func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
-        if cellType == .full {
-            self.myCollectionView.verticalSnapToItem(targetContentOffset: targetContentOffset, scrollView: scrollView, velocity: velocity)
-        }
     }
 }
 
 // MARK: - 콜렉션뷰 UI 업데이트 관련
 extension ViewController {
+    // collectionView.collectionViewLayout.invalidateLayout() : 컬렉션뷰 자체의 레이아웃을 업데이트(셀은 간섭받지 않는다.)
+    func footerApplyState(state: CustomFooterView.State) {
+        print(#fileID, #function, #line, "-customFooterState ")
+        
+        self.myCollectionViewDataSource.footerState = state
+        
+        DispatchQueue.main.async { [weak self] in
+            
+            guard let self = self else { return }
+            
+            let footer = myCollectionView.visibleSupplementaryViews(ofKind: UICollectionView.elementKindSectionFooter)
+            
+            if let sectionFooter = footer.first(where: { $0.isKind(of: CustomFooterView.self) }) as? CustomFooterView {
+                sectionFooter.applyState(state: state)
+            }
+            
+            myCollectionView.collectionViewLayout.invalidateLayout()
+        }
+    }
     
     // 받아온 데이터 배열을 enumerated를 활용해서 번호 붙여주기 (point: 실제배열에는 enumerated 작업 후에 추가했음 why? IndexPath 생성할 때 추가되기 전 count가 필요하기에)
     fileprivate func insertItemsInCollectionView(_ urlList: [URL], _ self: ViewController, completion: (() -> Void)? = nil ) {
@@ -249,27 +120,6 @@ extension ViewController {
         
         completion?()
     }
-    
-    // collectionView.collectionViewLayout.invalidateLayout() : 컬렉션뷰 자체의 레이아웃을 업데이트(셀은 간섭받지 않는다.)
-    fileprivate func footerApplyState(state: CustomFooterView.State) {
-        print(#fileID, #function, #line, "-customFooterState ")
-        
-        self.footerState = state
-        
-        DispatchQueue.main.async { [weak self] in
-            
-            guard let self = self else { return print(#fileID, #function, #line, "-nothing self ")}
-            
-            let footer = self.myCollectionView.visibleSupplementaryViews(ofKind: UICollectionView.elementKindSectionFooter)
-            
-            if let sectionFooter = footer.first(where: { $0.isKind(of: CustomFooterView.self) }) as? CustomFooterView {
-                sectionFooter.applyState(state: state)
-            }
-            
-            self.myCollectionView.collectionViewLayout.invalidateLayout()
-        }
-    }
-    
     
     /// 헤더뷰 텍스트 업데이트
     /// - Parameter collectionView:
@@ -312,8 +162,6 @@ extension ViewController {
     @objc func selectMode(_ sender: UIBarButtonItem) {
         // dataSource
         self.myCollectionViewDataSource.isSelectionMode.toggle()
-        
-        self.isSelectionMode.toggle()
         sender.title = self.selectionModeInfo
         
         self.myCollectionView.performBatchUpdates { [weak self] in
@@ -327,7 +175,7 @@ extension ViewController {
 
     @objc func fetchMore(_ sender: UIBarButtonItem) {
         
-        if !isSelectionMode || selectedGifList.isEmpty {
+        if !self.myCollectionViewDataSource.isSelectionMode || selectedGifList.isEmpty {
             let message = "1. 선택모드 ON\n2. 체크박스 클릭"
             self.presentAlert("공유하기", message)
             return
@@ -339,6 +187,23 @@ extension ViewController {
     }
 }
 
+// MARK: - refresh
+extension ViewController {
+    fileprivate func setRefresh() {
+        myCollectionView.refreshControl = self.reloadController
+        reloadController.addTarget(self, action: #selector(reload), for: .valueChanged)
+    }
+    
+    // UIRefresh 활용해보기(sender 숙지)
+    @objc func reload(_ sender: UIRefreshControl) {
+        loadGif {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                sender.endRefreshing()
+            }
+        }
+    }
+}
+
 // MARK: - Seg
 extension ViewController {
     fileprivate func setSegControl() {
@@ -347,7 +212,9 @@ extension ViewController {
     
     @objc func changeCellSize(_ sender: UISegmentedControl) {
         
-        self.cellType = CellType(rawValue: sender.selectedSegmentIndex) ?? CellType.threeGrid
+        let cellType = MyCollectionViewDataSource.CellType.self
+        
+        myCollectionViewDataSource.cellType = cellType.init(rawValue: sender.selectedSegmentIndex) ?? cellType.threeGrid
         
         self.myCollectionView.performBatchUpdates {
             let indexSet = IndexSet(integer: 0)
@@ -475,15 +342,6 @@ extension ViewController {
             completion?()
         }
     }
-    
-    // UIRefresh 활용해보기(sender 숙지)
-    @objc func reload(_ sender: UIRefreshControl) {
-        loadGif {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                sender.endRefreshing()
-            }
-        }
-    }
 }
 
 // MARK: - 에러처리
@@ -506,27 +364,20 @@ extension ViewController {
 // MARK: - Helper
 extension ViewController {
     
-    /// 스크롤뷰 바텀에 닿은지 체크
-    /// - Parameters:
-    ///   - threshold: 임계점(여유를 얼만큼 둘 것인지)
-    /// - Returns: 체크여부
-    fileprivate func isBottomCheck(threshold: CGFloat = -50.0 , _ scrollView: UIScrollView) -> Bool {
+    /// 셀 선택시 추가 및 제거
+    /// - Parameter indexPath: 셀 indexPath
+    fileprivate func insertSelectedGifList(_ indexPath: IndexPath) {
+        let selectedUrlString = self.gifList[indexPath.item].absoluteString
         
-        let contentSize = scrollView.contentSize.height
-        
-        let scrollViewSize = scrollView.frame.size.height
-        
-        print(#fileID, #function, #line, "contentSize: \(contentSize), scrollViewSize: \(scrollViewSize) ")
-        
-        if contentSize < scrollViewSize {
-            return false
+        if selectedGifList.contains(selectedUrlString) {
+            
+            if let deletedIndex = selectedGifList.firstIndex(where: { $0 == selectedUrlString }) {
+                selectedGifList.remove(at: deletedIndex)
+            }
+            
+        } else {
+            selectedGifList.insert(selectedUrlString, at: 0)
         }
-        
-        let bottomEdge = scrollView.contentOffset.y + scrollView.frame.size.height
-        
-        let isBottom = bottomEdge + threshold >= scrollView.contentSize.height
-        
-        return isBottom
     }
 }
 
@@ -540,7 +391,6 @@ extension ViewController {
             }))
             self?.present(alert, animated: true, completion: nil)
         }
-        
     }
 }
 

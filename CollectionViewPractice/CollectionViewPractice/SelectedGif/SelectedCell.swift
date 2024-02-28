@@ -18,7 +18,7 @@ class SelectedCell: UICollectionViewCell {
     @IBOutlet weak var selectedGif: UIImageView!
     @IBOutlet weak var deSelectedBT: UIButton!
     
-    var delegate: GifSelectionDelegate?
+    weak var delegate: GifSelectionDelegate?
     var cellData: String?
     
     override func awakeFromNib() {

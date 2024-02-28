@@ -31,6 +31,7 @@
                                             <segment title="" image="square.grid.2x2" catalog="system"/>
                                             <segment title="" image="rectangle.grid.1x2" catalog="system"/>
                                             <segment title="" image="square" catalog="system"/>
+                                            <segment title="" image="list.bullet" catalog="system"/>
                                         </segments>
                                     </segmentedControl>
                                     <collectionView hidden="YES" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="FsV-a4-iFZ">
@@ -188,6 +189,7 @@
     </scenes>
     <resources>
         <image name="checkbox - normal" width="30" height="30"/>
+        <image name="list.bullet" catalog="system" width="128" height="87"/>
         <image name="rectangle.grid.1x2" catalog="system" width="128" height="100"/>
         <image name="square" catalog="system" width="128" height="114"/>
         <image name="square.grid.2x2" catalog="system" width="128" height="114"/>
